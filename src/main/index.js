@@ -18,8 +18,6 @@ function createWindow() {
     }
   })
 
-  if (!app.isPackaged) mainWindow.webContents.openDevTools()
-
   ipcMain.handle('dialog:openDirectory', async () => {
     const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory']
@@ -43,6 +41,7 @@ function createWindow() {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
+    if (!app.isPackaged) mainWindow.webContents.openDevTools()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

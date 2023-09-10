@@ -17,13 +17,13 @@
     "build:linux": "npm run build && electron-builder --linux --config"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.409.0",
     "@electron-toolkit/preload": "^1.0.3",
     "@electron-toolkit/utils": "^1.0.2",
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.11.16",
     "@mui/material": "^5.13.3",
-    "aws-sdk": "^2.1390.0",
     "pg": "^8.11.0",
     "postcss-nesting": "^11.2.2"
   },

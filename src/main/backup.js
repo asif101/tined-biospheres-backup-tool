@@ -1,13 +1,17 @@
 import fs from 'fs'
 import path from 'path'
-import AWS from 'aws-sdk'
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
 import { Client } from 'pg'
 
 const downloadThumbnails = true
+const debugDownloadSmallerSet = false
 
-const s3 = new AWS.S3({
-  accessKeyId: import.meta.env.MAIN_VITE_AWS_ID,
-  secretAccessKey: import.meta.env.MAIN_VITE_AWS_SECRET_KEY
+const s3 = new S3Client({
+  region: 'us-east-1',
+  credentials: {
+    accessKeyId: import.meta.env.MAIN_VITE_AWS_ID,
+    secretAccessKey: import.meta.env.MAIN_VITE_AWS_SECRET_KEY
+  }
 })
 
 export async function performBackup(savePath, mainWindow) {
@@ -54,19 +58,27 @@ export async function performBackup(savePath, mainWindow) {
       message: `Got metadata JSON`
     })
 
-      metadata = metadata.filter((x, i) => i < 3)
+    if (debugDownloadSmallerSet) metadata = metadata.filter((x, i) => i < 3)
 
     let i = 1
     for await (const data of metadata) {
       // console.log(data)
       //   console.log(`Downloading image ${i}`)
       const imageName = `${data.image_id}.png`
-      const savedImageName = `${data.created_timestamp.toISOString().slice(0,-5).replaceAll(':', '-')}_${data.venue}_${data.drawing_prompt.replaceAll(' ', '-')}_${data.image_id}.png`
+      const savedImageName = `${data.created_timestamp
+        .toISOString()
+        .slice(0, -5)
+        .replaceAll(':', '-')}_${data.venue}_${data.drawing_prompt.replaceAll(' ', '-')}_${
+        data.image_id
+      }.png`
       const imageData = await downloadS3Object('biospheres-images', imageName)
       await fs.promises.writeFile(path.join(backupImageDir, savedImageName), imageData.Body)
       if (downloadThumbnails) {
         const thumbnailData = await downloadS3Object('biospheres-image-thumbnails', imageName)
-        await fs.promises.writeFile(path.join(backupThumbnailDir, savedImageName), thumbnailData.Body)
+        await fs.promises.writeFile(
+          path.join(backupThumbnailDir, savedImageName),
+          thumbnailData.Body
+        )
       }
       send({
         started: true,
@@ -99,10 +111,9 @@ export async function performBackup(savePath, mainWindow) {
 
 function downloadS3Object(bucket, key) {
   return new Promise((resolve, reject) => {
-    s3.getObject({ Bucket: bucket, Key: key }, (e, data) => {
-      if (e) reject(e)
-      else resolve(data)
-    })
+    s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }))
+      .then((data) => resolve(data))
+      .catch((e) => reject(e))
   })
 }
 
