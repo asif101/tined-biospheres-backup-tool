@@ -47,18 +47,19 @@ export async function performBackup(savePath, mainWindow) {
       message: `Got metadata JSON`
     })
 
-    //   metadata = metadata.filter((x, i) => i < 3)
+      metadata = metadata.filter((x, i) => i < 3)
 
     let i = 1
     for await (const data of metadata) {
       // console.log(data)
       //   console.log(`Downloading image ${i}`)
       const imageName = `${data.image_id}.png`
+      const savedImageName = `${data.created_timestamp.toISOString().slice(0,-5).replaceAll(':', '-')}_${data.venue}_${data.drawing_prompt.replaceAll(' ', '-')}_${data.image_id}.png`
       const imageData = await downloadS3Object('biospheres-images', imageName)
-      await fs.promises.writeFile(path.join(backupImageDir, imageName), imageData.Body)
+      await fs.promises.writeFile(path.join(backupImageDir, savedImageName), imageData.Body)
       if (downloadThumbnails) {
         const thumbnailData = await downloadS3Object('biospheres-image-thumbnails', imageName)
-        await fs.promises.writeFile(path.join(backupThumbnailDir, imageName), thumbnailData.Body)
+        await fs.promises.writeFile(path.join(backupThumbnailDir, savedImageName), thumbnailData.Body)
       }
       send({
         started: true,
