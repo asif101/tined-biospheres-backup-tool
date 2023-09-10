@@ -15,6 +15,13 @@ export async function performBackup(savePath, mainWindow) {
     mainWindow.webContents.send('downloadStatus', data)
   }
   try {
+    send({
+      started: true,
+      error: false,
+      done: false,
+      percent: 0,
+      message: `Getting metadata JSON...`
+    })
     const pg = new Client({
       host: import.meta.env.MAIN_VITE_POSTGRES_HOST,
       port: import.meta.env.MAIN_VITE_POSTGRES_PORT,
@@ -66,7 +73,7 @@ export async function performBackup(savePath, mainWindow) {
         error: false,
         done: false,
         percent: Math.round((i / metadata.length) * 100),
-        message: `${i}/${metadata.length}: ${data.image_id}.png`
+        message: `${i}/${metadata.length}: ${savedImageName}`
       })
       i++
     }
